@@ -63,12 +63,35 @@ In the original data there are a total of `r sum(is.na(data$steps))` intervals w
   
 ## 7. Replace the missing values  
   
-The missing values are replaced with the mean for the 
+The missing values are replaced with the mean activity of the interval for all the days.
 
 
 `````{r replace NA from original data}
+# Combine the original data and the mean for the interval data frames
+dataNoNA <- cbind(data, stepsInterval)
 
+# Substitute the NA with the mean acitvity for the specific interval
+for (i in 1:nrow(dataNoNA)){
+    if (is.na(dataNoNA[i, "steps"] == "TRUE")){
+        dataNoNA[i, "steps"] <- dataNoNA[i, "x"]
+    }
+}
+
+dataNoNA <- dataNoNA[, 1:3]
+
+# Total number of steps per day
+stepsDayNoNA <- aggregate(dataNoNA$steps, list(date = dataNoNA$date), sum, na.rm = TRUE)
 `````
-
   
+## 8. Histogram of the steps per day 
+  
+The steps per day data when the missing data is replaced by the average activity per interval can be presented as an histogram. 
+
+```{r steps per day without missing data(histogram)}
+hist(stepsDayNoNA$x, main = "Histogram of the steps per day data", xlab = "Steps per day")
+```
+  
+## 9. Mean and median values of the steps per day  
+  
+The mean value of the total number of steps taken per day when the missing data is replaced by the average activity per interval is `r round(mean(stepsDayNoNA$x), 3)` while the median value is `r round(median(stepsDayNoNA$x), 3)`, compared to when using the original data including missing values `r round(mean(stepsDay$x), 3)` and `r round(median(stepsDay$x), 3)`, respectively.
   
