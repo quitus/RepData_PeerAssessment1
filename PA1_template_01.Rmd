@@ -1,0 +1,74 @@
+---
+title: "RepData_Peer Assignment1"
+output: html_document
+---
+
+This is an R Markdown document containing the Peer Review Asignment 1 from the Coursera course reproducible Research (repdata-012). 
+
+```{r load data, echo = TRUE}
+# Load needed libraries
+library(knitr)
+
+# Set the home directory
+home <- getwd()
+
+# Load the activity.csv data file. This file should be located in the home directory
+data <- read.csv(file.path(home, "activity.csv"))
+
+# Convert the steps data into numeric data
+data <- transform(data, steps = as.numeric(steps))
+
+# Total number of steps per day
+stepsDay <- aggregate(data$steps, list(date = data$date), sum, na.rm = TRUE)
+`````
+
+## 1. Summary table of the steps per day  
+
+The number of total step per day logged from the **activity.csv** file are presented in the following table.
+`````{r steps per day table(kable)}
+# Print steps per day in a table
+kable(stepsDay, format = "html", digits = 2, col.names = c("Date", "Total Steps"), align = c( 1, "c"), caption = "Total number of steps per day")
+```
+  
+## 2. Histogram of the steps per day 
+  
+The steps per day data can be presented as an histogram. 
+
+```{r steps per day(histogram)}
+hist(stepsDay$x, main = "Histogram of the steps per day data", xlab = "Steps per day")
+```
+  
+## 3. Mean and median values of the steps per day  
+  
+The mean value of the total number of steps taken per day is `r round(mean(stepsDay$x), 3)` while the median value is `r round(median(stepsDay$x), 3)`.
+  
+## 4. Average number of steps per 5-min interval
+  
+The average number of steps per 5-min interval is presented in the following plot.  
+
+````{r steps per interval}
+# Total number of steps per interval
+stepsInterval <- aggregate(data$steps, list(Interval = data$interval), mean, na.rm = TRUE)
+
+plot(stepsInterval$Interval, stepsInterval$x, type = "l", main = "Average daily steps per measurement interval", xlab = "Measurement interval", ylab = "Average number of steps")
+````
+  
+## 5. Maximum period of activity during the 5-min interval  
+  
+The maximum period of activity among the data happens during the `r stepsInterval[which.max(stepsInterval$x), 1]` interval.  
+  
+## 6. Total number of missing values
+
+In the original data there are a total of `r sum(is.na(data$steps))` intervals with missing values.  
+  
+## 7. Replace the missing values  
+  
+The missing values are replaced with the mean for the 
+
+
+`````{r replace NA from original data}
+
+`````
+
+  
+  
