@@ -1,11 +1,15 @@
 ---
-title: "RepData_Peer Assignment1"
+title: "Reproducible Research. Peer Assessment 1"
 output: html_document
 ---
 
 This is an R Markdown document containing the Peer Review Asignment 1 from the Coursera course reproducible Research (repdata-012). 
 
-```{r load data, echo = TRUE}
+## 1. Loading and preprocessing the data
+  
+The file containing the original data (**activity.csv**) was read into R. The steps variable was transformed into numeric values, and the datevariable was transformed into the date type.
+  
+```{r load data, echo = TRUE, tidy = TRUE}
 # Load needed libraries
 library(knitr)
 
@@ -18,57 +22,46 @@ data <- read.csv(file.path(home, "activity.csv"))
 # Convert the steps data into numeric data
 data <- transform(data, steps = as.numeric(steps))
 
-# Total number of steps per day
-stepsDay <- aggregate(data$steps, list(date = data$date), sum, na.rm = TRUE)
+# Convert the date data into date type
+data <- transform(data, date = as.Date(date, "%Y-%m-%d"))
 `````
 
-## 1. Summary table of the steps per day  
+## 2. What is the mean total number of steps taken per day? 
 
 The number of total step per day logged from the **activity.csv** file are presented in the following table.
-`````{r steps per day table(kable)}
-# Print steps per day in a table
-kable(stepsDay, format = "html", digits = 2, col.names = c("Date", "Total Steps"), align = c( 1, "c"), caption = "Total number of steps per day")
-```
-  
-## 2. Histogram of the steps per day 
-  
-The steps per day data can be presented as an histogram. 
 
-```{r steps per day(histogram)}
-hist(stepsDay$x, main = "Histogram of the steps per day data", xlab = "Steps per day")
+`````{r steps per day analysis, echo = TRUE, tidy = TRUE}
+# Total number of steps per day
+stepsDay <- aggregate(data$steps, list(date = data$date), sum, na.rm = TRUE)
+
+# Histogram of steps per day
+hist(stepsDay$x, breaks = 15, xlim = c(0, 22500), col = "lightblue", main = "Steps per day", xlab = "Number of steps per day")
 ```
+ 
+The mean value of the total number of steps taken per day is **`r round(mean(stepsDay$x, na.rm = TRUE), 3)`** while the median value is **`r round(median(stepsDay$x, na.rm = TRUE), 3)`**.
   
-## 3. Mean and median values of the steps per day  
-  
-The mean value of the total number of steps taken per day is `r round(mean(stepsDay$x), 3)` while the median value is `r round(median(stepsDay$x), 3)`.
-  
-## 4. Average number of steps per 5-min interval
+## 3. What is the average daily acivity pattern?
   
 The average number of steps per 5-min interval is presented in the following plot.  
 
-````{r steps per interval}
+````{r daily activity pattern, echo = TRUE, tidy = TRUE}
 # Total number of steps per interval
-stepsInterval <- aggregate(data$steps, list(Interval = data$interval), mean, na.rm = TRUE)
+stepsInterval <- aggregate(data$steps, list(interval = data$interval), mean, na.rm = TRUE)
 
-plot(stepsInterval$Interval, stepsInterval$x, type = "l", main = "Average daily steps per measurement interval", xlab = "Measurement interval", ylab = "Average number of steps")
+plot(stepsInterval$interval, stepsInterval$x, type = "l", main = "Average daily steps per measurement interval", xlab = "Measurement interval", ylab = "Average number of steps")
 ````
   
-## 5. Maximum period of activity during the 5-min interval  
+The maximum period of activity among the data happens during the **`r stepsInterval[which.max(stepsInterval$x), 1]`** interval.  
   
-The maximum period of activity among the data happens during the `r stepsInterval[which.max(stepsInterval$x), 1]` interval.  
-  
-## 6. Total number of missing values
+## 4. Missing values
 
-In the original data there are a total of `r sum(is.na(data$steps))` intervals with missing values.  
-  
-## 7. Replace the missing values  
-  
-The missing values are replaced with the mean activity of the interval for all the days.
+In the original data there are a total of **`r sum(is.na(data$steps))`** intervals with missing values. 
+    
+The missing values from the original data were replaced with the mean activity for the given interval from all the days that had data available.
 
-
-`````{r replace NA from original data}
+`````{r missing values, echo = TRUE, tidy = TRUE}
 # Combine the original data and the mean for the interval data frames
-dataNoNA <- cbind(data, stepsInterval)
+dataNoNA <- merge(data, stepsInterval, by.x = "interval")
 
 # Substitute the NA with the mean acitvity for the specific interval
 for (i in 1:nrow(dataNoNA)){
@@ -81,17 +74,36 @@ dataNoNA <- dataNoNA[, 1:3]
 
 # Total number of steps per day
 stepsDayNoNA <- aggregate(dataNoNA$steps, list(date = dataNoNA$date), sum, na.rm = TRUE)
+
+# Histogram of steps per day
+hist(stepsDayNoNA$x, breaks = 15, xlim = c(0, 22500), col = "lightblue", main = "Steps per day", xlab = "Number of steps per day")
 `````
   
-## 8. Histogram of the steps per day 
+The mean value of the total number of steps taken per day when the missing data is replaced by the average activity per interval is **`r round(mean(stepsDayNoNA$x, na.rm = TRUE), 3)`** while the median value is **`r round(median(stepsDayNoNA$x, na.rm = TRUE), 3)`**. These values are slightly higher than the original calculated values, when missing data was present in the dataset. Moreover, after replacing the missing values the mean and median values appeared to be the same.
   
-The steps per day data when the missing data is replaced by the average activity per interval can be presented as an histogram. 
+## 5. Are there differences in activity patterns between weekdays and weekends??
 
-```{r steps per day without missing data(histogram)}
-hist(stepsDayNoNA$x, main = "Histogram of the steps per day data", xlab = "Steps per day")
-```
-  
-## 9. Mean and median values of the steps per day  
-  
-The mean value of the total number of steps taken per day when the missing data is replaced by the average activity per interval is `r round(mean(stepsDayNoNA$x), 3)` while the median value is `r round(median(stepsDayNoNA$x), 3)`, compared to when using the original data including missing values `r round(mean(stepsDay$x), 3)` and `r round(median(stepsDay$x), 3)`, respectively.
-  
+`````{r activity during weekdays and weekends, echo = TRUE, tidy = TRUE}
+# Convert the date data into date type
+dataNoNA <- transform(dataNoNA, date = as.Date(date, "%Y-%m-%d")) 
+
+dataNoNA$Weekday <- weekdays(dataNoNA$date)
+
+for (i in 1:nrow(dataNoNA)){
+    if (dataNoNA[i, "Weekday"] == "Saturday"){
+        dataNoNA[i, "Day"] <- "weekend"
+    } else if (dataNoNA[i, "Weekday"] == "Sunday"){
+        dataNoNA[i, "Day"] <- "weekend"
+        } else dataNoNA[i, "Day"] <- "weekday"
+    }
+
+dataNoNA$Day <- as.factor(dataNoNA$Day)
+
+# Total number of steps per interval
+stepsNoNAInterval <- aggregate(dataNoNA$steps, list(interval = dataNoNA$interval, Day = dataNoNA$Day), mean, na.rm = TRUE)
+
+# Plot daily activity per day
+par(mfrow = c(2,1))
+with(subset(stepsNoNAInterval, Day == "weekday"), plot(interval, x, type = "l", main = "Average daily steps during the weekdays", xlab = "Measurement interval", ylab = "Average number of steps"))
+with(subset(stepsNoNAInterval, Day == "weekend"), plot(interval, x, type = "l", main = "Average daily steps during the weekends", xlab = "Measurement interval", ylab = "Average number of steps"))
+``````
